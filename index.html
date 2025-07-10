@@ -1,100 +1,218 @@
 ﻿<!DOCTYPE html>
-<!--
-Copyright 2019 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    https://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
-
-
-
-<html lang="en">
+<html lang="tr">
   <head>
-    <title>&lt;model-viewer&gt; codelab</title>
+    <title>3D Kütüphane AR Uygulaması</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Artırılmış gerçeklik ile 3D kütüphane modeli">
 
     <link rel="stylesheet" href="demo-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
+    <!-- Updated model-viewer to latest version -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer@3.4.0/dist/model-viewer.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer@3.4.0/dist/model-viewer-legacy.js"></script>
 
-<script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.1.3/webcomponents-loader.js"></script>
+    <!-- Web Components polyfill -->
+    <script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.8.0/webcomponents-loader.js"></script>
 
-
-
-  </head> 
+    <!-- Performance polyfills -->
+    <script src="https://unpkg.com/intersection-observer@0.12.2/intersection-observer.js"></script>
+    <script src="https://unpkg.com/resize-observer-polyfill@1.5.1/dist/ResizeObserver.js"></script>
+    <script src="https://unpkg.com/fullscreen-polyfill@1.0.2/dist/fullscreen.polyfill.js"></script>
+  </head>
 <body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>🏛️ 3D Kütüphane AR Deneyimi</h1>
+      <p>Kütüphaneyi artırılmış gerçeklik ile keşfedin</p>
+    </header>
 
-<!-- 💁 Include both scripts below to support all browsers! -->
+    <main class="model-container">
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Model yükleniyor...</p>
+      </div>
 
-<!-- Loads <model-viewer> for modern browsers: -->
-<script type="module"
-    src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js">
-</script>
+      <model-viewer 
+        id="libraryModel"
+        src="./kutuphane/Kutuphane.gltf"
+        alt="3D Kütüphane Modeli"
+        poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='100%25' height='100%25' fill='%2370ACA1'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white'%3EKütüphane Yükleniyor%3C/text%3E%3C/svg%3E"
+        
+        background-color="#f0f0f0"
+        environment-image="neutral"
+        
+        loading="eager"
+        reveal="auto"
+        
+        auto-rotate
+        auto-rotate-delay="1000"
+        rotation-per-second="15deg"
+        
+        camera-controls
+        enable-pan
+        touch-action="pan-y"
+        
+        camera-orbit="45deg 75deg 2.5m"
+        min-camera-orbit="auto auto 1m"
+        max-camera-orbit="auto auto 5m"
+        
+        field-of-view="30deg"
+        
+        shadow-intensity="0.3"
+        shadow-softness="0.8"
+        exposure="1"
+        tone-mapping="neutral"
+        
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-scale="auto"
+        ar-placement="floor"
+        
+        interaction-prompt="auto"
+        interaction-prompt-threshold="2000"
+        
+        animation-name=""
+        autoplay>
+        
+        <!-- AR Button -->
+        <button slot="ar-button" class="ar-button">
+          � AR'da Görüntüle
+        </button>
 
-<!-- Loads <model-viewer> for old browsers like IE11: -->
-<script nomodule
-    src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js">
-</script>
+        <!-- Loading Progress -->
+        <div slot="progress-bar" class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
 
+        <!-- Error Message -->
+        <div slot="error" class="error-message">
+          ❌ Model yüklenemedi. Lütfen internet bağlantınızı kontrol edin.
+        </div>
 
+        <!-- Hotspots for interaction -->
+        <button class="hotspot" slot="hotspot-1" data-position="0.5m 1.5m 0.5m" data-normal="0m 1m 0m">
+          <div class="annotation">📚 Kitap Bölümü</div>
+        </button>
+        
+        <button class="hotspot" slot="hotspot-2" data-position="-0.5m 0.8m 0.5m" data-normal="0m 1m 0m">
+          <div class="annotation">💻 Çalışma Alanı</div>
+        </button>
+      </model-viewer>
 
-<!-- The following libraries and polyfills are recommended to maximize browser support -->
-<!-- NOTE: you must adjust the paths as appropriate for your project -->
+      <!-- Control Panel -->
+      <div class="control-panel">
+        <div class="control-group">
+          <label>Işık Ayarı:</label>
+          <input type="range" id="exposureSlider" min="0.5" max="2" step="0.1" value="1">
+        </div>
+        
+        <div class="control-group">
+          <label>Gölge Yoğunluğu:</label>
+          <input type="range" id="shadowSlider" min="0" max="1" step="0.1" value="0.3">
+        </div>
+        
+        <div class="control-group">
+          <button id="toggleAnimation" class="control-btn">🔄 Otomatik Döndürme</button>
+          <button id="resetCamera" class="control-btn">📷 Kamerayı Sıfırla</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="instructions">
+        <h3>Nasıl Kullanılır:</h3>
+        <ul>
+          <li>🖱️ <strong>Fare/Dokunma:</strong> Modeli döndürmek için sürükleyin</li>
+          <li>🔍 <strong>Zoom:</strong> Tekerlekle yakınlaştırın/uzaklaştırın</li>
+          <li>📱 <strong>AR Modu:</strong> "AR'da Görüntüle" butonuna tıklayın</li>
+          <li>🎯 <strong>Hotspotlar:</strong> Bilgi noktalarına tıklayın</li>
+        </ul>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const modelViewer = document.getElementById('libraryModel');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const exposureSlider = document.getElementById('exposureSlider');
+    const shadowSlider = document.getElementById('shadowSlider');
+    const toggleAnimationBtn = document.getElementById('toggleAnimation');
+    const resetCameraBtn = document.getElementById('resetCamera');
+
+    // Loading state management
+    modelViewer.addEventListener('load', () => {
+      loadingOverlay.style.opacity = '0';
+      setTimeout(() => {
+        loadingOverlay.style.display = 'none';
+      }, 300);
+    });
+
+    modelViewer.addEventListener('error', (event) => {
+      console.error('Model loading error:', event);
+      loadingOverlay.innerHTML = '<div class="error-state">❌ Model yüklenemedi</div>';
+    });
+
+    // Interactive controls
+    exposureSlider.addEventListener('input', (e) => {
+      modelViewer.exposure = parseFloat(e.target.value);
+    });
+
+    shadowSlider.addEventListener('input', (e) => {
+      modelViewer.shadowIntensity = parseFloat(e.target.value);
+    });
+
+    let isAutoRotating = true;
+    toggleAnimationBtn.addEventListener('click', () => {
+      isAutoRotating = !isAutoRotating;
+      modelViewer.autoRotate = isAutoRotating;
+      toggleAnimationBtn.textContent = isAutoRotating ? '⏸️ Döndürmeyi Durdur' : '▶️ Döndürmeyi Başlat';
+    });
+
+    resetCameraBtn.addEventListener('click', () => {
+      modelViewer.cameraOrbit = '45deg 75deg 2.5m';
+      modelViewer.fieldOfView = '30deg';
+    });
+
+    // AR availability check
+    modelViewer.addEventListener('ar-status', (event) => {
+      if (event.detail.status === 'not-presenting') {
+        const arButton = modelViewer.querySelector('[slot="ar-button"]');
+        if (!modelViewer.canActivateAR) {
+          arButton.textContent = '❌ AR Desteklenmiyor';
+          arButton.disabled = true;
+        }
+      }
+    });
+
+    // Performance monitoring
+    let frameCount = 0;
+    let lastTime = Date.now();
     
-<!-- 🚨 REQUIRED: Web Components polyfill to support Edge and Firefox < 63 -->
-<script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.1.3/webcomponents-loader.js"></script>
+    function trackPerformance() {
+      frameCount++;
+      const now = Date.now();
+      if (now - lastTime > 5000) { // Check every 5 seconds
+        const fps = Math.round((frameCount * 1000) / (now - lastTime));
+        console.log(`Performance: ${fps} FPS`);
+        frameCount = 0;
+        lastTime = now;
+      }
+      requestAnimationFrame(trackPerformance);
+    }
+    trackPerformance();
 
-<!-- 💁 OPTIONAL: Intersection Observer polyfill for better performance in Safari and IE11 -->
-<script src="https://unpkg.com/intersection-observer@0.5.1/intersection-observer.js"></script>
-
-<!-- 💁 OPTIONAL: Resize Observer polyfill improves resize behavior in non-Chrome browsers -->
-<script src="https://unpkg.com/resize-observer-polyfill@1.5.1/dist/ResizeObserver.js"></script>
-
-<!-- 💁 OPTIONAL: Fullscreen polyfill is required for experimental AR features in Canary -->
-<script src="https://unpkg.com/fullscreen-polyfill@1.0.2/dist/fullscreen.polyfill.js"></script>
-
-<!-- 💁 OPTIONAL: Include prismatic.js for Magic Leap support -->
-<script src="https://unpkg.com/@magicleap/prismatic@0.18.2/prismatic.min.js"></script>
-
-
-..Lütfen Bekleyiniz..
-
-<model-viewer 
-background-color="#70ACA1"
-
-
-			   loading="eager"
-			   src="https://ogrokuedutr-my.sharepoint.com/:u:/g/personal/ertugrularik_korkutata_edu_tr/EbPjgkBHUdRLtyc8Ek42QHgB3qkNhj0BLwzEDIyqltFLRA?e=UNRSJY"
-              auto-rotate  camera-controls  camera-orbit="55deg deg 2.5m"   alt="A 3D model of an astronaut"
-              alt="ilahiyat"
-			  
-
-
-              shadow-intensity="5"
-			  exposure="0.55"
-              ar 
-			 ar-modes="webxr scene-viewer quick-look" 
-			 ar-scale="auto"
-
-            
-
-
-</model-viewer>
-
+    // Hotspot interactions
+    document.querySelectorAll('.hotspot').forEach(hotspot => {
+      hotspot.addEventListener('click', (e) => {
+        const annotation = e.currentTarget.querySelector('.annotation');
+        annotation.style.display = annotation.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+  </script>
 </body>
-
-
-
-
 </html>
